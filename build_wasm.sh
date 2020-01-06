@@ -2,6 +2,7 @@
 set -e
 
 EMSDK_VERSION="latest"
+LIBAV_VERSION="v12.3"
 
 #######################################
 # Ensures a repo is checked out.
@@ -32,9 +33,9 @@ ensure_libav() {
 }
 
 build() {
+  ensure_libav
   pushd libav
-
-  make clean
+  git checkout "$LIBAV_VERSION"
 
   emconfigure ./configure --cc="emcc" --ar="emar" --prefix="$(pwd)"/../dist --enable-cross-compile --target-os=none --arch=x86_32 --cpu=generic \
     --enable-gpl --enable-version3 --disable-avdevice --disable-avformat --disable-avfilter \
@@ -44,6 +45,7 @@ build() {
     --disable-hwaccels --disable-parsers --disable-bsfs --disable-debug --disable-protocols --disable-indevs --disable-outdevs
   emmake make
   emmake make install
+  git checkout master
 
   popd
   echo "Running Emscripten..."
@@ -54,7 +56,6 @@ build() {
 
 main() {
   ensure_emscripten
-  ensure_libav
   build
 }
 
