@@ -33,10 +33,13 @@ ensure_libav() {
 }
 
 build() {
+  rm -rf libav-h264.js libav-h264.wasm libav-h264.worker.js
+
   ensure_libav
   pushd libav
   git checkout "$LIBAV_VERSION"
 
+  echo "Building libav..."
   emconfigure ./configure --cc="emcc" --ar="emar" --prefix="$(pwd)"/../dist --enable-cross-compile --target-os=none --arch=x86_32 --cpu=generic \
     --enable-gpl --enable-version3 --disable-avdevice --disable-avformat --disable-avfilter \
     --disable-swscale --disable-avresample \
@@ -49,7 +52,9 @@ build() {
 
   popd
   echo "Running Emscripten..."
-  emcc dist/lib/libavcodec.a dist/lib/libavutil.a -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT='web,worker' -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=4 -s PTHREAD_HINT_NUM_CORES=4 -s ERROR_ON_UNDEFINED_SYMBOLS=0 -O3 --llvm-opts 3 --llvm-lto 3 -o ./libav-h264.js -s EXPORTED_FUNCTIONS='["_malloc", "_free","_avcodec_find_decoder","_avcodec_alloc_context3","_av_frame_alloc","_avcodec_open2","_avcodec_decode_video2"]'
+  emcc src/decoder.c -I./dist/include -c -o dist/decoder.bc
+  EXPORTED_FUNCTIONS='["_malloc","_free","_init_lib","_create_codec_context","_destroy_codec_context","_decode"]'
+  emcc dist/decoder.bc dist/lib/libavcodec.a dist/lib/libavutil.a -msimd128 -s MODULARIZE=1 -s EXPORT_ES6=1 -s ENVIRONMENT='web,worker' -s FILESYSTEM=0 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=4 -s PTHREAD_HINT_NUM_CORES=4 -O3 --llvm-opts 3 --llvm-lto 3 -o ./libav-h264.js -s EXPORTED_FUNCTIONS="$EXPORTED_FUNCTIONS"
 
   echo "Finished Build"
 }
