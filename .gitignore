@@ -130,3 +130,5 @@ Makefile
 /libav-h264.js
 /libav-h264.wasm
 /libav-h264.worker.js
+/libav/config.fate
+/libav/config.mak
