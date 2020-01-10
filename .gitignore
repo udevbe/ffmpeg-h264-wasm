@@ -132,3 +132,8 @@ Makefile
 /libav-h264.worker.js
 /libav/config.fate
 /libav/config.mak
+/emsdk/
+/libav/
+/demo/node_modules/
+/libav/config.fate
+/libav/config.mak

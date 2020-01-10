@@ -20,7 +20,7 @@ destroy_codec_context(struct codec_context *context);
 
 int
 decode(struct codec_context *context,
-       void *data_in, int data_in_size, int width_in, int height_in,
-       void *data_out);
+       unsigned char *data_in, int data_in_size,
+       void *data_out, int *data_size_out, int *width_out, int *height_out);
 
 #endif //FFMPEG_H264_WASM_DECODER_H
