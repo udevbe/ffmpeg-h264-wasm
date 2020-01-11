@@ -14,11 +14,11 @@ struct codec_context {
 
 void
 init_lib(void) {
-    avcodec_register_all();
+   avcodec_register_all();
 }
 
 struct codec_context *
-create_codec_context() {
+create_codec_context(int thread_count) {
     struct codec_context *context = malloc(sizeof(struct codec_context));
 
     context->codec = avcodec_find_decoder(AV_CODEC_ID_H264);
@@ -26,7 +26,6 @@ create_codec_context() {
         free(context);
         return 0;
     }
-    // avcodec_register(context->codec);
 
     context->ctx = avcodec_alloc_context3(context->codec);
     if (avcodec_open2(context->ctx, context->codec, NULL) < 0) {
@@ -35,7 +34,7 @@ create_codec_context() {
         return 0;
     }
 
-    context->ctx->thread_count = 8;
+    context->ctx->thread_count = thread_count;
     context->ctx->thread_type = FF_THREAD_SLICE;
 
     return context;

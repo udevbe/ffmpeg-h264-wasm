@@ -13,7 +13,7 @@ void
 init_lib(void);
 
 struct codec_context *
-create_codec_context(void);
+create_codec_context(int thread_count);
 
 void
 destroy_codec_context(struct codec_context *context);

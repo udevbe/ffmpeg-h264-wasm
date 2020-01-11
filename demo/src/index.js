@@ -48,41 +48,41 @@ function onPictureReady (message) {
  * @param {number}height
  */
 function onPicture (buffer, width, height) {
-  canvas.width = width
-  canvas.height = height
-
-  // the width & height returned are actually padded, so we have to use the frame size to get the real image dimension
-  // when uploading to texture
-  const stride = width // stride
-  // height is padded with filler rows
-
-  // if we knew the size of the video before encoding, we could cut out the black filler pixels. We don't, so just set
-  // it to the size after encoding
-  const sourceWidth = width
-  const sourceHeight = height
-  const maxXTexCoord = sourceWidth / stride
-  const maxYTexCoord = sourceHeight / height
-
-  const lumaSize = stride * height
-  const chromaSize = lumaSize >> 2
-
-  const yBuffer = buffer.subarray(0, lumaSize)
-  const uBuffer = buffer.subarray(lumaSize, lumaSize + chromaSize)
-  const vBuffer = buffer.subarray(lumaSize + chromaSize, lumaSize + (2 * chromaSize))
-
-  const chromaHeight = height >> 1
-  const chromaStride = stride >> 1
-
-  // we upload the entire image, including stride padding & filler rows. The actual visible image will be mapped
-  // from texture coordinates as to crop out stride padding & filler rows using maxXTexCoord and maxYTexCoord.
-
-  yTexture.image2dBuffer(yBuffer, stride, height)
-  uTexture.image2dBuffer(uBuffer, chromaStride, chromaHeight)
-  vTexture.image2dBuffer(vBuffer, chromaStride, chromaHeight)
-
-  yuvSurfaceShader.setTexture(yTexture, uTexture, vTexture)
-  yuvSurfaceShader.updateShaderData({ w: width, h: height }, { maxXTexCoord, maxYTexCoord })
-  yuvSurfaceShader.draw()
+  // canvas.width = width
+  // canvas.height = height
+  //
+  // // the width & height returned are actually padded, so we have to use the frame size to get the real image dimension
+  // // when uploading to texture
+  // const stride = width // stride
+  // // height is padded with filler rows
+  //
+  // // if we knew the size of the video before encoding, we could cut out the black filler pixels. We don't, so just set
+  // // it to the size after encoding
+  // const sourceWidth = width
+  // const sourceHeight = height
+  // const maxXTexCoord = sourceWidth / stride
+  // const maxYTexCoord = sourceHeight / height
+  //
+  // const lumaSize = stride * height
+  // const chromaSize = lumaSize >> 2
+  //
+  // const yBuffer = buffer.subarray(0, lumaSize)
+  // const uBuffer = buffer.subarray(lumaSize, lumaSize + chromaSize)
+  // const vBuffer = buffer.subarray(lumaSize + chromaSize, lumaSize + (2 * chromaSize))
+  //
+  // const chromaHeight = height >> 1
+  // const chromaStride = stride >> 1
+  //
+  // // we upload the entire image, including stride padding & filler rows. The actual visible image will be mapped
+  // // from texture coordinates as to crop out stride padding & filler rows using maxXTexCoord and maxYTexCoord.
+  //
+  // yTexture.image2dBuffer(yBuffer, stride, height)
+  // uTexture.image2dBuffer(uBuffer, chromaStride, chromaHeight)
+  // vTexture.image2dBuffer(vBuffer, chromaStride, chromaHeight)
+  //
+  // yuvSurfaceShader.setTexture(yTexture, uTexture, vTexture)
+  // yuvSurfaceShader.updateShaderData({ w: width, h: height }, { maxXTexCoord, maxYTexCoord })
+  // yuvSurfaceShader.draw()
 
   decodeNext()
 }
@@ -151,7 +151,7 @@ function main () {
     })
   }).then(() => {
     const fetches = []
-    for (let i = 0; i < 404; i++) {
+    for (let i = 0; i < 60; i++) {
       fetches.push(fetch(`h264samples/${i}`).then(response => {
         return response.arrayBuffer().then(function (buffer) {
           h264samples[i] = new Uint8Array(buffer)

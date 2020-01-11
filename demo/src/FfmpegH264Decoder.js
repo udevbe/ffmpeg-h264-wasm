@@ -83,7 +83,7 @@ class FfmpegH264Decoder {
     this._outHeight = this._libavH264Module._malloc(4)
 
     this._libavH264Module._init_lib()
-    this._codecContext = this._libavH264Module._create_codec_context()
+    this._codecContext = this._libavH264Module._create_codec_context(navigator.hardwareConcurrency)
   }
 
   release () {
