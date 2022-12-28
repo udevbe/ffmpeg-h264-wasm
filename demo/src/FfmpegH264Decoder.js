@@ -36,21 +36,15 @@ class FfmpegH264Decoder {
   /**
    * @param libavH264Module
    * @param {function(output:Uint8Array,width:number,height:number):void}onPictureReady
-   * @param {function():void}onNeedMoreData
    * @param {function(errorCode:number):void}onError
    */
-  constructor (libavH264Module, onPictureReady, onNeedMoreData, onError) {
+  constructor (libavH264Module, onPictureReady, onError) {
     this._libavH264Module = libavH264Module
     /**
      * @type {function(Uint8Array, number, number): void}
      * @private
      */
     this._onPictureReady = onPictureReady
-    /**
-     * @type {function(): void}
-     * @private
-     */
-    this._onNeedMoreData = onNeedMoreData
     /**
      * @type {function(errorCode:number): void}
      * @private
@@ -61,11 +55,6 @@ class FfmpegH264Decoder {
      * @private
      */
     this._inBuffer = this._libavH264Module._malloc(1024 * 1024)
-    /**
-     * @type {number}
-     * @private
-     */
-    this._outBuffer = this._libavH264Module._malloc(3840 * 2160 * 4)
     /**
      * @type {number}
      * @private
@@ -81,15 +70,12 @@ class FfmpegH264Decoder {
      * @private
      */
     this._outHeight = this._libavH264Module._malloc(4)
-
-    this._libavH264Module._init_lib()
     this._codecContext = this._libavH264Module._create_codec_context(navigator.hardwareConcurrency)
   }
 
   release () {
     this._libavH264Module._destroy_codec_context(this._codecContext)
     this._libavH264Module._free(this._inBuffer)
-    this._libavH264Module._free(this._outBuffer)
     this._libavH264Module._free(this._outBufferSize)
     this._libavH264Module._free(this._outWidth)
     this._libavH264Module._free(this._outHeight)
@@ -100,15 +86,15 @@ class FfmpegH264Decoder {
    */
   decode (nal) {
     this._libavH264Module.HEAPU8.set(nal, this._inBuffer)
-    const ret = this._libavH264Module._decode(this._codecContext, this._inBuffer, nal.byteLength, this._outBuffer, this._outBufferSize, this._outWidth, this._outHeight)
-    if (ret !== 0) {
-      this._onError(ret)
+    const outBufferPtr = this._libavH264Module._decode(this._codecContext, this._inBuffer, nal.byteLength, this._outBufferSize, this._outWidth, this._outHeight)
+    if (outBufferPtr === 0) {
+      this._onError(0)
       return
     }
     const width = this._libavH264Module.getValue(this._outWidth, 'i32')
     const height = this._libavH264Module.getValue(this._outHeight, 'i32')
     const outBufferSize = this._libavH264Module.getValue(this._outBufferSize, 'i32')
-    const pic = new Uint8Array(this._libavH264Module.HEAPU8.subarray(this._outBuffer, this._outBuffer + outBufferSize).slice())
+    const pic = new Uint8Array(this._libavH264Module.HEAPU8.subarray(outBufferPtr, outBufferPtr + outBufferSize))
     this._onPictureReady(pic, width, height)
   }
 }

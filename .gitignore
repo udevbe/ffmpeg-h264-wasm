@@ -137,3 +137,5 @@ Makefile
 /demo/node_modules/
 /libav/config.fate
 /libav/config.mak
+/ffmpeg/
+/ffbuild/
