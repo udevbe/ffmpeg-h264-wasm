@@ -1,0 +1,29 @@
+{
+  "name": "ffmpegh264",
+  "version": "0.0.1-alpha.0",
+  "description": "FFMPEG web assembly h264 decoder",
+  "main": "dist/index.js",
+  "typings": "types/index.d.ts",
+  "files": [
+    "dist",
+    "types"
+  ],
+  "scripts": {
+    "build-wasm": "bash build_wasm.sh",
+    "build": "tsc"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.47.1",
+    "@typescript-eslint/parser": "^5.47.1",
+    "eslint": "8.31.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.8.1",
+    "typescript": "^4.9.4"
+  },
+  "author": "Erik De Rijcke",
+  "homepage": "https://github.com/udevbe/tinyh264",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/udevbe/tinyh264"
+}
