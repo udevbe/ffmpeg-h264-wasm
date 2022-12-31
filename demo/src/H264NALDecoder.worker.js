@@ -1,3 +1,3 @@
-import { init } from './FfmpegH264Worker'
+import { init } from '../../dist/'
 
 init()
