@@ -1,7 +1,3 @@
-//
-// Created by erik on 1/6/20.
-//
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "decoder.h"
@@ -36,8 +32,8 @@ create_codec_context() {
 
 void
 destroy_codec_context(struct codec_context *context) {
-    avcodec_free_context(&context->ctx);
     av_frame_free(&context->frame);
+    avcodec_free_context(&context->ctx);
     free(context);
 }
 

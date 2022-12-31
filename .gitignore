@@ -127,7 +127,7 @@ Makefile
 /dist/
 /emsdk/
 /libav/
-/libav-h264.js
+/src/libav-h264.js
 /libav-h264.wasm
 /libav-h264.worker.js
 /libav/config.fate
@@ -139,3 +139,5 @@ Makefile
 /libav/config.mak
 /ffmpeg/
 /ffbuild/
+/types/
+/node_modules/

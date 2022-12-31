@@ -20,60 +20,27 @@
 //  IN THE SOFTWARE.
 //
 
-/**
- * This class wraps the details of the h264bsd library.
- * Module object is an Emscripten module provided globally by TinyH264.js
- *
- * In order to use this class, you first queue encoded data using queueData.
- * Each call to decode() will decode a single encoded element.
- * When decode() returns H264bsdDecoder.PIC_RDY, a picture is ready in the output buffer.
- * You can also use the onPictureReady() function to determine when a picture is ready.
- * The output buffer can be accessed by calling getNextOutputPicture()
- * An output picture may also be decoded using an H264bsdCanvas.
- * When you're done decoding, make sure to call release() to clean up internal buffers.
- */
-class FfmpegH264Decoder {
-  /**
-   * @param libavH264Module
-   * @param {function(output:Uint8Array,width:number,height:number):void}onPictureReady
-   * @param {function(errorCode:number):void}onError
-   */
-  constructor (libavH264Module, onPictureReady, onError) {
-    this.libavH264Module = libavH264Module
-    /**
-     * @type {function(Uint8Array, number, number): void}
-     * @private
-     */
-    this._onPictureReady = onPictureReady
-    /**
-     * @type {function(errorCode:number): void}
-     * @private
-     */
-    this._onError = onError
-    /**
-     * @type {number}
-     * @private
-     */
+import { libavh264 } from './H264Worker'
+
+export class H264Decoder {
+  private readonly _inBuffer: number
+  private readonly _outBufferSize: number
+  private readonly _outWidth: number
+  private readonly _outHeight: number
+  private readonly _codecContext: number
+
+  constructor(
+    private readonly libavH264Module: libavh264,
+    private readonly onPictureReady: (output: Uint8Array, width: number, height: number) => void,
+  ) {
     this._inBuffer = this.libavH264Module._malloc(1024 * 1024)
-    /**
-     * @type {number}
-     * @private
-     */
     this._outBufferSize = this.libavH264Module._malloc(4)
-    /**
-     * @type {number}
-     * @private
-     */
     this._outWidth = this.libavH264Module._malloc(4)
-    /**
-     * @type {number}
-     * @private
-     */
     this._outHeight = this.libavH264Module._malloc(4)
-    this._codecContext = this.libavH264Module._create_codec_context(navigator.hardwareConcurrency)
+    this._codecContext = this.libavH264Module._create_codec_context()
   }
 
-  release () {
+  release() {
     this.libavH264Module._destroy_codec_context(this._codecContext)
     this.libavH264Module._free(this._inBuffer)
     this.libavH264Module._free(this._outBufferSize)
@@ -81,22 +48,23 @@ class FfmpegH264Decoder {
     this.libavH264Module._free(this._outHeight)
   }
 
-  /**
-   * @param {Uint8Array} nal
-   */
-  decode (nal) {
+  decode(nal: Uint8Array) {
     this.libavH264Module.HEAPU8.set(nal, this._inBuffer)
-    const outBufferPtr = this.libavH264Module._decode(this._codecContext, this._inBuffer, nal.byteLength, this._outBufferSize, this._outWidth, this._outHeight)
+    const outBufferPtr = this.libavH264Module._decode(
+      this._codecContext,
+      this._inBuffer,
+      nal.byteLength,
+      this._outBufferSize,
+      this._outWidth,
+      this._outHeight,
+    )
     if (outBufferPtr === 0) {
-      this._onError(0)
-      return
+      return undefined
     }
     const width = this.libavH264Module.getValue(this._outWidth, 'i32')
     const height = this.libavH264Module.getValue(this._outHeight, 'i32')
     const outBufferSize = this.libavH264Module.getValue(this._outBufferSize, 'i32')
     const pic = new Uint8Array(this.libavH264Module.HEAPU8.subarray(outBufferPtr, outBufferPtr + outBufferSize))
-    this._onPictureReady(pic, width, height)
+    this.onPictureReady(pic, width, height)
   }
 }
-
-export default FfmpegH264Decoder

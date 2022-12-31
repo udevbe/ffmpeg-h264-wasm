@@ -61,10 +61,10 @@ build() {
 
   popd
   echo "Running Emscripten..."
-  emcc src/decoder.c -I./dist/include -O3 -flto -msimd128 -c -o dist/decoder.bc
+  emcc native/decoder.c -I./dist/include -O3 -flto -msimd128 -c -o dist/decoder.bc
   EXPORTED_FUNCTIONS='["_malloc","_free","_create_codec_context","_destroy_codec_context","_decode"]'
   EXPORTED_RUNTIME_METHODS='["calledRun","getValue"]'
-  emcc dist/decoder.bc dist/lib/libavcodec.a dist/lib/libavutil.a -O3 -flto -msimd128 -L"$(pwd)"/dist/lib --memory-init-file 0 -s ENVIRONMENT='worker' -s NO_EXIT_RUNTIME=1 -s NO_FILESYSTEM=1 -s INVOKE_RUN=0 -s DOUBLE_MODE=0 -s ALLOW_MEMORY_GROWTH=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s SINGLE_FILE=1 -o ./libav-h264.js -s EXPORTED_FUNCTIONS="$EXPORTED_FUNCTIONS" -s EXPORTED_RUNTIME_METHODS="$EXPORTED_RUNTIME_METHODS"
+  emcc dist/decoder.bc dist/lib/libavcodec.a dist/lib/libavutil.a -O3 -flto -msimd128 -L"$(pwd)"/dist/lib -s TOTAL_MEMORY=128MB -s EVAL_CTORS=2 -fno-rtti -fno-exceptions --memory-init-file 0 -s ENVIRONMENT='worker' -s NO_EXIT_RUNTIME=1 -s NO_FILESYSTEM=1 -s INVOKE_RUN=0 -s DOUBLE_MODE=0 -s ALLOW_MEMORY_GROWTH=0 -s MODULARIZE=1 -s EXPORT_ES6=1 -s SINGLE_FILE=1 -o ./src/libav-h264.js -s EXPORTED_FUNCTIONS="$EXPORTED_FUNCTIONS" -s EXPORTED_RUNTIME_METHODS="$EXPORTED_RUNTIME_METHODS"
 
   echo "Finished Build"
 }
