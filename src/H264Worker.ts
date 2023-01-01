@@ -7,12 +7,15 @@ export type libavh264 = {
   _free(ptr: number): void
   _decode(
     codecContext: number,
-    inBuffer: number,
-    byteLength: number,
-    outBufferSize: number,
-    outWidth: number,
-    outHeight: number,
-  ): number
+    dataIn: number,
+    dataInSize: number,
+    yPlaneOut: number,
+    uPlaneOut: number,
+    vPlaneOut: number,
+    widthOut: number,
+    heightOut: number,
+    strideOut: number,
+  ): void
   getValue(address: number, addressType: string): number
   _create_codec_context(): number
   _destroy_codec_context(_codecContext: number): void
@@ -33,18 +36,30 @@ export function init() {
           case 'decode': {
             let decoder = h264Decoders[renderStateId]
             if (!decoder) {
-              decoder = new H264Decoder(LibavH264, (output: Uint8Array, width: number, height: number) => {
-                postMessage(
-                  {
-                    type: 'pictureReady',
-                    width: width,
-                    height: height,
-                    renderStateId: renderStateId,
-                    data: output.buffer,
+              decoder = new H264Decoder(
+                LibavH264,
+                (
+                  output: {
+                    yPlane: Uint8Array
+                    uPlane: Uint8Array
+                    vPlane: Uint8Array
+                    stride: number
                   },
-                  [output.buffer],
-                )
-              })
+                  width: number,
+                  height: number,
+                ) => {
+                  postMessage(
+                    {
+                      type: 'pictureReady',
+                      width,
+                      height,
+                      renderStateId,
+                      data: output,
+                    },
+                    [output.yPlane.buffer, output.uPlane.buffer, output.vPlane.buffer],
+                  )
+                },
+              )
               h264Decoders[renderStateId] = decoder
             }
             decoder.decode(new Uint8Array(message.data, message.offset, message.length))

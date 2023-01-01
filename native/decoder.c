@@ -37,9 +37,17 @@ destroy_codec_context(struct codec_context *context) {
     free(context);
 }
 
-uint8_t *
+void
 decode(struct codec_context *context,
-       unsigned char *data_in, int data_in_size, int *data_size_out, int *width_out, int *height_out) {
+       uint8_t *data_in,
+       int data_in_size,
+       uint8_t **y_plane_out,
+       uint8_t **u_plane_out,
+       uint8_t **v_plane_out,
+       int *width_out,
+       int *height_out,
+       int *stride_out
+) {
     AVPacket avpkt;
     int ret;
 
@@ -49,18 +57,21 @@ decode(struct codec_context *context,
     ret = avcodec_send_packet(context->ctx, &avpkt);
     if (ret != 0) {
         // TODO handle error codes?
-        return NULL;
+        *y_plane_out = 0;
+        return;
     }
 
     ret = avcodec_receive_frame(context->ctx, context->frame);
     if (ret != 0) {
         // TODO handle error codes?
-        return NULL;
+        *y_plane_out = 0;
+        return;
     }
 
-    *data_size_out = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, context->frame->width, context->frame->height, 1);
+    *y_plane_out = context->frame->data[0];
+    *u_plane_out = context->frame->data[1];
+    *v_plane_out = context->frame->data[2];
+    *stride_out = context->frame->linesize[0];
     *width_out = context->frame->width;
     *height_out = context->frame->height;
-
-    return context->frame->data[0];
 }

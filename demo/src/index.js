@@ -2,7 +2,7 @@ import Worker from './H264NALDecoder.worker'
 import YUVSurfaceShader from './YUVSurfaceShader'
 import Texture from './Texture'
 
-let tinyH264Worker = null
+let H264Worker = null
 let videoStreamId = 1
 
 let canvas = null
@@ -26,7 +26,7 @@ let start = 0
  * @param {Uint8Array} h264Nal
  */
 function decode(h264Nal) {
-  tinyH264Worker.postMessage(
+  H264Worker.postMessage(
     {
       type: 'decode',
       data: h264Nal.buffer,
@@ -38,53 +38,31 @@ function decode(h264Nal) {
   )
 }
 
-/**
- * @param {{width:number, height:number, data: ArrayBuffer}}message
- */
 function onPictureReady(message) {
   const { width, height, data } = message
-  onPicture(new Uint8Array(data), width, height)
+  onPicture(data, width, height)
 }
 
-/**
- * @param {Uint8Array}buffer
- * @param {number}width
- * @param {number}height
- */
-function onPicture(buffer, width, height) {
+function onPicture(data, width, height) {
   decodeNext()
+  const { yPlane, uPlane, vPlane, stride } = data
 
   canvas.width = width
   canvas.height = height
 
-  // the width & height returned are actually padded, so we have to use the frame size to get the real image dimension
-  // when uploading to texture
-  const stride = width // stride
-  // height is padded with filler rows
-
-  // if we knew the size of the video before encoding, we could cut out the black filler pixels. We don't, so just set
-  // it to the size after encoding
   const sourceWidth = width
   const sourceHeight = height
   const maxXTexCoord = sourceWidth / stride
   const maxYTexCoord = sourceHeight / height
 
-  const lumaSize = stride * height
-  const chromaSize = lumaSize >> 2
-
-  const yBuffer = buffer.subarray(0, lumaSize)
-  const uBuffer = buffer.subarray(lumaSize, lumaSize + chromaSize)
-  const vBuffer = buffer.subarray(lumaSize + chromaSize, lumaSize + 2 * chromaSize)
-
   const chromaHeight = height >> 1
-  const chromaStride = stride >> 1
 
   // we upload the entire image, including stride padding & filler rows. The actual visible image will be mapped
   // from texture coordinates as to crop out stride padding & filler rows using maxXTexCoord and maxYTexCoord.
 
-  yTexture.image2dBuffer(yBuffer, stride, height)
-  uTexture.image2dBuffer(uBuffer, chromaStride, chromaHeight)
-  vTexture.image2dBuffer(vBuffer, chromaStride, chromaHeight)
+  yTexture.image2dBuffer(yPlane, stride, height)
+  uTexture.image2dBuffer(uPlane, stride / 2, chromaHeight)
+  vTexture.image2dBuffer(vPlane, stride / 2, chromaHeight)
 
   yuvSurfaceShader.setTexture(yTexture, uTexture, vTexture)
   yuvSurfaceShader.updateShaderData({ w: width, h: height }, { maxXTexCoord, maxYTexCoord })
@@ -92,9 +70,9 @@ function onPicture(buffer, width, height) {
 }
 
 function release() {
-  if (tinyH264Worker) {
-    tinyH264Worker.postMessage({ type: 'release', renderStateId: videoStreamId })
-    tinyH264Worker = null
+  if (H264Worker) {
+    H264Worker.postMessage({ type: 'release', renderStateId: videoStreamId })
+    H264Worker = null
   }
 }
 
@@ -126,16 +104,15 @@ function main() {
      * @type {Worker}
      * @private
      */
-    tinyH264Worker = new Worker()
-    tinyH264Worker.addEventListener('message', (e) => {
-      const message =
-        /** @type {{type:string, width:number, height:number, data:ArrayBuffer, renderStateId:number}} */ e.data
+    H264Worker = new Worker()
+    H264Worker.addEventListener('message', (e) => {
+      const message = e.data
       switch (message.type) {
         case 'pictureReady':
           onPictureReady(message)
           break
         case 'decoderReady':
-          resolve(tinyH264Worker)
+          resolve(H264Worker)
           break
       }
     })
