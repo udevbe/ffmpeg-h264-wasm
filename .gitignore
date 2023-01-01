@@ -141,3 +141,5 @@ Makefile
 /ffbuild/
 /types/
 /node_modules/
+/demo/dist/main.js
+/demo/dist/main.worker.js
