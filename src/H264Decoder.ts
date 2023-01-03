@@ -21,6 +21,7 @@
 //
 
 import { libavh264 } from './H264Worker'
+import { FfmpegH264Frame } from './index'
 
 export class H264Decoder {
   private readonly codecContext: number
@@ -38,16 +39,7 @@ export class H264Decoder {
 
   constructor(
     private readonly libavH264Module: libavh264,
-    private readonly onPictureReady: (
-      output: {
-        yPlane: Uint8Array
-        uPlane: Uint8Array
-        vPlane: Uint8Array
-        stride: number
-      },
-      width: number,
-      height: number,
-    ) => void,
+    private readonly onPictureReady: (output: FfmpegH264Frame, width: number, height: number) => void,
   ) {
     this.codecContext = this.libavH264Module._create_codec_context()
     this.dataIn = this.libavH264Module._malloc(1024 * 1024)
@@ -72,7 +64,7 @@ export class H264Decoder {
 
   decode(nal: Uint8Array) {
     this.libavH264Module.HEAPU8.set(nal, this.dataIn)
-    this.libavH264Module._decode(
+    const ptr = this.libavH264Module._decode(
       this.codecContext,
       this.dataIn,
       nal.byteLength,
@@ -109,6 +101,7 @@ export class H264Decoder {
 
     this.onPictureReady(
       {
+        ptr,
         yPlane,
         uPlane,
         vPlane,
@@ -117,5 +110,9 @@ export class H264Decoder {
       width,
       height,
     )
+  }
+
+  closeFrame(framePtr: number) {
+    this.libavH264Module._close_frame(framePtr)
   }
 }

@@ -15,10 +15,11 @@ export type libavh264 = {
     widthOut: number,
     heightOut: number,
     strideOut: number,
-  ): void
+  ): number
   getValue(address: number, addressType: string): number
   _create_codec_context(): number
   _destroy_codec_context(_codecContext: number): void
+  _close_frame(framePtr: number): void
 }
 
 const h264Decoders: Record<string, H264Decoder> = {}
@@ -36,30 +37,18 @@ export function init() {
           case 'decode': {
             let decoder = h264Decoders[renderStateId]
             if (!decoder) {
-              decoder = new H264Decoder(
-                LibavH264,
-                (
-                  output: {
-                    yPlane: Uint8Array
-                    uPlane: Uint8Array
-                    vPlane: Uint8Array
-                    stride: number
+              decoder = new H264Decoder(LibavH264, (output, width, height) => {
+                postMessage(
+                  {
+                    type: 'pictureReady',
+                    width,
+                    height,
+                    renderStateId,
+                    data: output,
                   },
-                  width: number,
-                  height: number,
-                ) => {
-                  postMessage(
-                    {
-                      type: 'pictureReady',
-                      width,
-                      height,
-                      renderStateId,
-                      data: output,
-                    },
-                    [output.yPlane.buffer, output.uPlane.buffer, output.vPlane.buffer],
-                  )
-                },
-              )
+                  [output.yPlane.buffer, output.uPlane.buffer, output.vPlane.buffer],
+                )
+              })
               h264Decoders[renderStateId] = decoder
             }
             decoder.decode(new Uint8Array(message.data, message.offset, message.length))
@@ -70,6 +59,13 @@ export function init() {
             if (decoder) {
               decoder.release()
               delete h264Decoders[renderStateId]
+            }
+            break
+          }
+          case 'closeFrame': {
+            const decoder = h264Decoders[renderStateId]
+            if (decoder) {
+              decoder.closeFrame(message.data as number)
             }
             break
           }

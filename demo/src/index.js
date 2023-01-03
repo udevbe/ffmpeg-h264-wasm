@@ -45,7 +45,7 @@ function onPictureReady(message) {
 
 function onPicture(data, width, height) {
   decodeNext()
-  const { yPlane, uPlane, vPlane, stride } = data
+  const { ptr: framePtr, yPlane, uPlane, vPlane, stride } = data
 
   canvas.width = width
   canvas.height = height
@@ -63,10 +63,15 @@ function onPicture(data, width, height) {
   yTexture.image2dBuffer(yPlane, stride, height)
   uTexture.image2dBuffer(uPlane, stride / 2, chromaHeight)
   vTexture.image2dBuffer(vPlane, stride / 2, chromaHeight)
+  closeFrame(framePtr)
 
   yuvSurfaceShader.setTexture(yTexture, uTexture, vTexture)
   yuvSurfaceShader.updateShaderData({ w: width, h: height }, { maxXTexCoord, maxYTexCoord })
   yuvSurfaceShader.draw()
+}
+
+function closeFrame(framePtr) {
+  H264Worker.postMessage({ type: 'closeFrame', renderStateId: videoStreamId, data: framePtr })
 }
 
 function release() {

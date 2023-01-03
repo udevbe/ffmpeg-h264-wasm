@@ -1,23 +1,19 @@
-//
-// Created by erik on 1/6/20.
-//
-
 #ifndef FFMPEG_H264_WASM_DECODER_H
 #define FFMPEG_H264_WASM_DECODER_H
 
-struct codec_context;
+#include "libavcodec/avcodec.h"
 
-void
-init_lib(void);
-
-struct codec_context *
+AVCodecContext *
 create_codec_context();
 
 void
-destroy_codec_context(struct codec_context *context);
+destroy_codec_context(AVCodecContext *ctx);
 
 void
-decode(struct codec_context *context,
+close_frame(AVFrame *frame);
+
+AVFrame *
+decode(AVCodecContext *ctx,
        uint8_t *data_in,
        int data_in_size,
        uint8_t **y_plane_out,
