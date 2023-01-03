@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include "decoder.h"
 #include "libavcodec/avcodec.h"
 #include "libavutil/imgutils.h"
