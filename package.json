@@ -1,6 +1,6 @@
 {
   "name": "ffmpegh264",
-  "version": "1.0.0-alpha.0",
+  "version": "1.0.0-alpha.1",
   "description": "FFMPEG web assembly h264 decoder",
   "main": "dist/index.js",
   "typings": "types/index.d.ts",
